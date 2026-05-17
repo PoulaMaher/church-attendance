@@ -44,7 +44,7 @@ namespace churchAttendace
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
                 options.Cookie.SameSite = SameSiteMode.Lax;
-                options.ExpireTimeSpan = TimeSpan.FromHours(8);
+                options.ExpireTimeSpan = TimeSpan.FromDays(60); // 2 months persistent cookie when RememberMe = true
                 options.SlidingExpiration = true;
                 options.LoginPath = "/Account/Login";
                 options.LogoutPath = "/Account/Logout";

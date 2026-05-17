@@ -192,7 +192,7 @@ namespace churchAttendace.Areas.Admin.Controllers
 
         private static bool IsWithinAttendanceWindow(DateTime sessionDate)
         {
-            return DateTime.Now <= sessionDate.Date.AddDays(1);
+            return DateTime.Now.Date <= sessionDate.Date.AddDays(1);
         }
     }
 }

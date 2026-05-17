@@ -117,7 +117,7 @@
                         سجل المراجعة
                     </a>
                 }
-                @if (User.IsInRole("Admin") || User.IsInRole("StageManager"))
+                @if (User.IsInRole("Admin") || User.IsInRole("StageManager") || User.IsInRole("Servant"))
                 {
                     <a class="nav-link @Active("Admin", "Visitation")" asp-area="Admin" asp-controller="Visitation" asp-action="Index">
                         <i class="bi bi-telephone-outbound"></i>

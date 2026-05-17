@@ -21,6 +21,16 @@ namespace churchAttendace.Controllers
         [AllowAnonymous]
         public IActionResult Login(string? returnUrl = null)
         {
+            // If user is already authenticated, redirect to dashboard
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
+                return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
+            }
+
             ViewData["ReturnUrl"] = returnUrl;
             return View(new LoginViewModel());
         }
