@@ -39,24 +39,32 @@
                 </a>
             </div>
             <div class="d-flex align-items-center gap-2 gap-sm-3 flex-wrap justify-content-end">
+
+                <a class="btn btn-outline-primary app-btn d-flex align-items-center gap-2" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                    <i class="bi bi-speedometer2 fs-5"></i>
+                    <span class="fw-bold d-none d-sm-inline">لوحة التحكم</span>
+                </a>
                 <div class="dropdown">
-                    <button class="btn btn-outline-primary app-btn rounded-circle p-2 user-avatar-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="@User.Identity?.Name">
+                    <button class="btn btn-outline-primary app-btn rounded-circle p-2 user-avatar-btn d-flex align-items-center justify-content-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="@User.Identity?.Name">
                         <i class="bi bi-person-circle fs-4"></i>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end text-end" style="min-width: 200px;">
-                        <li class="px-3 py-2 text-muted small">البريد الإلكتروني: @User.Identity?.Name</li>
-                        <li><hr class="dropdown-divider" /></li>
-                        <li>
-                            <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="px-3">
+                    <ul class="dropdown-menu dropdown-menu-end text-end shadow border-0 p-2" style="min-width: 220px; border-radius: 12px;">
+                        <li class="px-2 py-2 text-center text-muted small fw-bold text-truncate" dir="ltr">
+                            @User.Identity?.Name
+                        </li>
+                        <li><hr class="dropdown-divider mb-2" /></li>
+                        <li class="px-1 pb-1">
+                            <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
                                 @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-danger w-100 app-btn">
-                                    <i class="bi bi-box-arrow-right"></i>
-                                    تسجيل الخروج
+                                <button type="submit" class="btn btn-danger w-100 app-btn d-flex align-items-center justify-content-center gap-2">
+                                    <i class="bi bi-box-arrow-right fs-5"></i>
+                                    <span class="fw-bold">تسجيل الخروج</span>
                                 </button>
                             </form>
                         </li>
                     </ul>
                 </div>
+
             </div>
         </div>
     </header>
@@ -191,7 +199,7 @@
                             سجل المراجعة
                         </a>
                     }
-                    @if (User.IsInRole("Admin") || User.IsInRole("StageManager"))
+                    @if (User.IsInRole("Admin") || User.IsInRole("StageManager") || User.IsInRole("Servant"))
                     {
                         <a class="nav-link @Active("Admin", "Visitation")" asp-area="Admin" asp-controller="Visitation" asp-action="Index">
                             <i class="bi bi-telephone-outbound"></i>

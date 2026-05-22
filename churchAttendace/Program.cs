@@ -14,7 +14,7 @@ namespace churchAttendace
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            QuestPDF.Settings.License = LicenseType.Community;
+            //QuestPDF.Settings.License = LicenseType.Community;
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(

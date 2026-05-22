@@ -60,10 +60,57 @@
                         <tr>
                             <td>@item.StageName</td>
                             <td>@item.ClassName</td>
-                            <td>@item.ChildName</td>
-                            <td>@item.ParentPhoneNumber</td>
-                            <td>@(string.IsNullOrWhiteSpace(item.ChildPhoneNumber) ? "-" : item.ChildPhoneNumber)</td>
-                            <td>@item.LastAbsentDate?.ToString("yyyy/MM/dd")</td>
+                            <td class="fw-bold text-primary">@item.ChildName</td>
+
+                            @* --- هاتف ولي الأمر --- *@
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(item.ParentPhoneNumber))
+                                {
+                                    <div class="d-flex align-items-center gap-2" dir="ltr">
+                                        <!-- زر الاتصال -->
+                                        <a href="tel:@item.ParentPhoneNumber" class="btn btn-sm btn-outline-primary rounded-pill px-3 flex-grow-1 text-center" title="اتصال هاتفي">
+                                            <i class="bi bi-telephone-outbound me-1"></i> @item.ParentPhoneNumber
+                                        </a>
+                                        <!-- زر الواتساب -->
+                                        <a href="https://wa.me/2@(item.ParentPhoneNumber)" target="_blank" class="btn btn-sm btn-outline-success rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px;" title="مراسلة واتساب">
+                                            <i class="bi bi-whatsapp"></i>
+                                        </a>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+
+                            @* --- هاتف الطفل --- *@
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(item.ChildPhoneNumber))
+                                {
+                                    <div class="d-flex align-items-center gap-2" dir="ltr">
+                                        <!-- زر الاتصال -->
+                                        <a href="tel:@item.ChildPhoneNumber" class="btn btn-sm btn-outline-info rounded-pill px-3 flex-grow-1 text-center" title="اتصال هاتفي">
+                                            <i class="bi bi-phone me-1"></i> @item.ChildPhoneNumber
+                                        </a>
+                                        <!-- زر الواتساب -->
+                                        <a href="https://wa.me/2@(item.ChildPhoneNumber)" target="_blank" class="btn btn-sm btn-outline-success rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px;" title="مراسلة واتساب">
+                                            <i class="bi bi-whatsapp"></i>
+                                        </a>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    <i class="bi bi-calendar-x me-1 text-danger"></i>
+                                    @item.LastAbsentDate?.ToString("yyyy/MM/dd")
+                                </span>
+                            </td>
+                            
                             <td class="text-end">
                                 <form asp-action="ToggleContacted" method="post" asp-route-childId="@item.ChildId" asp-antiforgery="true">
                                     @Html.AntiForgeryToken()
@@ -85,4 +132,3 @@
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
 }
-
