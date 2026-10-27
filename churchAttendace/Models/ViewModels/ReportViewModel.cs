@@ -101,4 +101,13 @@ namespace churchAttendace.Models.ViewModels
         public ReportFilterViewModel Filters { get; set; } = new();
         public List<ConsecutiveAttendanceReportRowViewModel> Rows { get; set; } = new();
     }
+
+    public class PrintReportViewModel
+    {
+        public string Title { get; set; } = string.Empty;
+        public string? Subtitle { get; set; }
+        public IReadOnlyList<string> Headers { get; set; } = new List<string>();
+        public IReadOnlyList<IReadOnlyList<string>> Rows { get; set; } = new List<IReadOnlyList<string>>();
+    }
 }
+

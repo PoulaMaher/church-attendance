@@ -97,7 +97,7 @@ namespace churchAttendace.Areas.Admin.Controllers
                 $"{r.AttendanceRate:0.##}%"
             }).ToList();
 
-            return BuildExportResult(format, "sessions-report", "تقرير الجلسات", headers, dataRows);
+            return await BuildExportResultAsync(format, "sessions-report", "تقرير الجلسات", headers, dataRows, filters);
         }
 
         [HttpPost]
@@ -117,7 +117,7 @@ namespace churchAttendace.Areas.Admin.Controllers
                 r.Notes ?? "-"
             }).ToList();
 
-            return BuildExportResult(format, "attendance-grid-report", "تقرير شبكة الحضور", headers, dataRows);
+            return await BuildExportResultAsync(format, "attendance-grid-report", "تقرير شبكة الحضور", headers, dataRows, filters);
         }
 
         [HttpPost]
@@ -135,7 +135,7 @@ namespace churchAttendace.Areas.Admin.Controllers
                 r.LastAbsentDate?.ToString("yyyy/MM/dd") ?? "-"
             }).ToList();
 
-            return BuildExportResult(format, "absent-children-report", "تقرير الأطفال الغائبين", headers, dataRows);
+            return await BuildExportResultAsync(format, "absent-children-report", "تقرير الأطفال الغائبين", headers, dataRows, filters);
         }
 
         [HttpPost]
@@ -154,7 +154,7 @@ namespace churchAttendace.Areas.Admin.Controllers
                 r.LastSessionDate?.ToString("yyyy/MM/dd") ?? "-"
             }).ToList();
 
-            return BuildExportResult(format, "consecutive-attendance-report", "تقرير السلاسل المتتالية", headers, dataRows);
+            return await BuildExportResultAsync(format, "consecutive-attendance-report", "تقرير السلاسل المتتالية", headers, dataRows, filters);
         }
 
         private async Task LoadFiltersAsync(ReportFilterViewModel filters)
@@ -178,16 +178,57 @@ namespace churchAttendace.Areas.Admin.Controllers
             ViewData["Classes"] = new SelectList(classes, "Id", "Name", filters.ClassId);
         }
 
-        private IActionResult BuildExportResult(string format, string fileNamePrefix, string title, IReadOnlyList<string> headers, IReadOnlyList<IReadOnlyList<string>> rows)
+        private async Task<IActionResult> BuildExportResultAsync(string format, string fileNamePrefix, string title, IReadOnlyList<string> headers, IReadOnlyList<IReadOnlyList<string>> rows, ReportFilterViewModel? filters = null)
         {
             if (string.Equals(format, "pdf", StringComparison.OrdinalIgnoreCase))
             {
-                var pdf = _exportService.ExportToPdf(title, headers, rows);
-                return File(pdf, "application/pdf", $"{fileNamePrefix}.pdf");
+                if (Environment.Is64BitProcess)
+                {
+                    try
+                    {
+                        var pdf = _exportService.ExportToPdf(title, headers, rows);
+                        return File(pdf, "application/pdf", $"{fileNamePrefix}_{DateTime.Now:yyyyMMdd_HHmm}.pdf");
+                    }
+                    catch
+                    {
+                        // Fallback to printable view below
+                    }
+                }
+
+                string? stageName = null;
+                string? className = null;
+                if (filters?.StageId.HasValue == true)
+                {
+                    stageName = await _context.Stages.Where(s => s.Id == filters.StageId.Value).Select(s => s.Name).FirstOrDefaultAsync();
+                }
+                if (filters?.ClassId.HasValue == true)
+                {
+                    className = await _context.Classes.Where(c => c.Id == filters.ClassId.Value).Select(c => c.Name).FirstOrDefaultAsync();
+                }
+
+                var subtitleParts = new List<string>
+                {
+                    $"تاريخ الاستخراج: {DateTime.Now:yyyy/MM/dd HH:mm}",
+                    $"إجمالي السجلات: {rows.Count}"
+                };
+                if (!string.IsNullOrEmpty(stageName)) subtitleParts.Add($"المرحلة: {stageName}");
+                if (!string.IsNullOrEmpty(className)) subtitleParts.Add($"الفصل: {className}");
+                if (filters?.From.HasValue == true) subtitleParts.Add($"من: {filters.From.Value:yyyy/MM/dd}");
+                if (filters?.To.HasValue == true) subtitleParts.Add($"إلى: {filters.To.Value:yyyy/MM/dd}");
+
+                var model = new PrintReportViewModel
+                {
+                    Title = title,
+                    Subtitle = string.Join(" | ", subtitleParts),
+                    Headers = headers,
+                    Rows = rows
+                };
+
+                return View("PrintReport", model);
             }
 
             var excel = _exportService.ExportToExcel(title, headers, rows);
-            return File(excel, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"{fileNamePrefix}.xlsx");
+            return File(excel, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"{fileNamePrefix}_{DateTime.Now:yyyyMMdd_HHmm}.xlsx");
         }
 
         private int? NormalizeStageSelection(int? stageId, IReadOnlyCollection<int> allowedStageIds)

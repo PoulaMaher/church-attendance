@@ -93,6 +93,10 @@
                         <i class="bi bi-person-heart"></i>
                         الأطفال
                     </a>
+                    <a class="nav-link @Active("Admin", "Points")" asp-area="Admin" asp-controller="Points" asp-action="Index">
+                        <i class="bi bi-star"></i>
+                        نقاط الأطفال
+                    </a>
                 }
                 <a class="nav-link @Active("", "Sessions")" asp-controller="Sessions" asp-action="Index">
                     <i class="bi bi-calendar-event"></i>
@@ -166,6 +170,10 @@
                         <a class="nav-link @Active("Admin", "Children")" asp-area="Admin" asp-controller="Children" asp-action="Index">
                             <i class="bi bi-person-heart"></i>
                             الأطفال
+                        </a>
+                        <a class="nav-link @Active("Admin", "Points")" asp-area="Admin" asp-controller="Points" asp-action="Index">
+                            <i class="bi bi-star"></i>
+                            نقاط الأطفال
                         </a>
                     }
                     <a class="nav-link @Active("", "Sessions")" asp-controller="Sessions" asp-action="Index">

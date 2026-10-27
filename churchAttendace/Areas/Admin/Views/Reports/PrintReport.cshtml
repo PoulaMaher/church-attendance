@@ -1,0 +1,167 @@
+@model churchAttendace.Models.ViewModels.PrintReportViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@Model.Title - كنيسة الشهيد العظيم مارمينا</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
+    <style>
+        body {
+            font-family: "Cairo", "Segoe UI", Tahoma, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            padding: 20px;
+        }
+        .print-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .header-section {
+            border-bottom: 2px solid #0d6efd;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th {
+            background-color: #1e3a8a !important;
+            color: #fff !important;
+            text-align: center;
+            vertical-align: middle;
+            padding: 8px 6px;
+            border: 1px solid #cbd5e1;
+        }
+        td {
+            padding: 6px;
+            text-align: center;
+            vertical-align: middle;
+            border: 1px solid #e2e8f0;
+        }
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        @@media print {
+            body {
+                background-color: #fff;
+                padding: 0;
+            }
+            .print-container {
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+            th {
+                background-color: #1e3a8a !important;
+                color: #fff !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            tr:nth-child(even) {
+                background-color: #f8fafc !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            @@page {
+                size: A4 landscape;
+                margin: 10mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-container">
+        <!-- أزرار الإجراءات (لا تظهر في الطباعة) -->
+        <div class="no-print d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
+            <div>
+                <button onclick="window.close()" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-x-circle"></i> إغلاق النافذة
+                </button>
+            </div>
+            <div class="d-flex gap-2">
+                <button onclick="window.print()" class="btn btn-primary btn-sm d-flex align-items-center gap-1">
+                    <i class="bi bi-printer"></i> طباعة / حفظ كـ PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- ترويسة التقرير -->
+        <div class="header-section text-center">
+            <h3 class="fw-bold mb-1" style="color: #1e3a8a;">كنيسة الشهيد العظيم مارمينا</h3>
+            <h5 class="text-secondary mb-2">@Model.Title</h5>
+            @if (!string.IsNullOrWhiteSpace(Model.Subtitle))
+            {
+                <div class="text-muted small">
+                    @Model.Subtitle
+                </div>
+            }
+        </div>
+
+        <!-- جدول التقرير -->
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">#</th>
+                        @foreach (var h in Model.Headers)
+                        {
+                            <th>@h</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Rows.Any())
+                    {
+                        <tr>
+                            <td colspan="@(Model.Headers.Count + 1)" class="text-center py-4 text-muted">لا توجد بيانات مطابقة للتقرير.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        for (int i = 0; i < Model.Rows.Count; i++)
+                        {
+                            var row = Model.Rows[i];
+                            <tr>
+                                <td>@(i + 1)</td>
+                                @foreach (var cell in row)
+                                {
+                                    <td>@cell</td>
+                                }
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- تذييل الصفحة -->
+        <div class="mt-4 pt-2 border-top d-flex justify-content-between align-items-center text-muted small">
+            <span>نظام إدارة خدمة الحضور والافتقاد - كنيسة مارمينا</span>
+            <span>تقرير رسمي معتمد</span>
+        </div>
+    </div>
+
+    <script>
+        // تشغيل نافذة الطباعة تلقائياً عند فتح الصفحة
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                window.print();
+            }, 400);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,432 @@
+@model IEnumerable<churchAttendace.Models.Entities.Child>
+@{
+    ViewData["Title"] = "نقاط الأطفال";
+    ViewData["PageTitle"] = "نقاط الأطفال";
+    ViewData["PageSubtitle"] = "متابعة وتحديث رصيد نقاط الأطفال للأنشطة والتشجيع";
+    ViewData["Breadcrumbs"] = new List<BreadcrumbItem>
+    {
+        new() { Title = "لوحة التحكم", Url = Url.Action("Index", "Dashboard", new { area = "Admin" }) },
+        new() { Title = "نقاط الأطفال", IsActive = true }
+    };
+
+    var searchVal = ViewData["Search"]?.ToString() ?? string.Empty;
+    var stageVal = ViewData["StageId"]?.ToString() ?? string.Empty;
+    var classVal = ViewData["ClassId"]?.ToString() ?? string.Empty;
+    var hasFilter = !string.IsNullOrEmpty(searchVal) || !string.IsNullOrEmpty(stageVal) || !string.IsNullOrEmpty(classVal);
+    var totalChildren = (int)(ViewData["TotalChildren"] ?? 0);
+    var totalPoints = (int)(ViewData["TotalPoints"] ?? 0);
+    var maxPoints = (int)(ViewData["MaxPoints"] ?? 0);
+}
+
+@Html.AntiForgeryToken()
+
+<div class="row g-3 mb-3">
+    <div class="col-12 col-sm-4">
+        <div class="app-card p-3 d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-primary-subtle text-primary p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                <i class="bi bi-people fs-4"></i>
+            </div>
+            <div>
+                <div class="text-muted small">عدد الأطفال</div>
+                <div class="h5 mb-0 fw-bold" id="stat-total-children">@totalChildren</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-4">
+        <div class="app-card p-3 d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-warning-subtle text-warning p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                <i class="bi bi-star-fill fs-4"></i>
+            </div>
+            <div>
+                <div class="text-muted small">إجمالي النقاط المجمعة</div>
+                <div class="h5 mb-0 fw-bold text-warning" id="stat-total-points">@totalPoints</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-4">
+        <div class="app-card p-3 d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-success-subtle text-success p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                <i class="bi bi-trophy-fill fs-4"></i>
+            </div>
+            <div>
+                <div class="text-muted small">أعلى رصيد نقاط</div>
+                <div class="h5 mb-0 fw-bold text-success" id="stat-max-points">@maxPoints</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="app-card animate__animated animate__fadeInUp mb-3">
+    <div class="app-card-header">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-sliders text-primary fs-5"></i>
+            <h2 class="h6 mb-0">بحث وفلترة</h2>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <button type="button" class="btn btn-outline-danger app-btn btn-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#resetAllModal">
+                <i class="bi bi-exclamation-octagon"></i>
+                <span>تصفير نقاط كل الأطفال</span>
+            </button>
+        </div>
+    </div>
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-12 col-md-6 col-lg-4">
+            <label class="form-label d-none d-md-block small">بحث</label>
+            <input name="search" value="@searchVal" class="form-control form-control-sm" placeholder="اسم الطفل أو ولي الأمر" />
+        </div>
+        <div class="col-6 col-md-6 col-lg-4">
+            <label class="form-label d-none d-md-block small">المرحلة</label>
+            <select name="stageId" class="form-select form-select-sm">
+                <option value="">كل المراحل</option>
+                @if (ViewData["Stages"] is SelectList stages)
+                {
+                    foreach (var option in stages)
+                    {
+                        <option value="@option.Value" selected="@(option.Value == stageVal)">@option.Text</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-6 col-md-6 col-lg-4">
+            <label class="form-label d-none d-md-block small">الفصل</label>
+            <select name="classId" class="form-select form-select-sm">
+                <option value="">كل الفصول</option>
+                @if (ViewData["Classes"] is SelectList classes)
+                {
+                    foreach (var option in classes)
+                    {
+                        <option value="@option.Value" selected="@(option.Value == classVal)">@option.Text</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-12 d-flex gap-2 align-items-center flex-wrap">
+            <button type="submit" class="btn btn-outline-primary app-btn btn-sm">
+                <i class="bi bi-filter"></i>
+                تصفية
+            </button>
+            @if (hasFilter)
+            {
+                <a asp-action="Index" class="btn btn-outline-secondary app-btn btn-sm">
+                    <i class="bi bi-x-circle"></i>
+                    إلغاء التصفية
+                </a>
+            }
+        </div>
+    </form>
+</div>
+
+<div class="app-card animate__animated animate__fadeInUp">
+    <div class="table-responsive">
+        <table class="table app-table app-table-mobile-ready align-middle">
+            <thead>
+                <tr>
+                    <th>الاسم</th>
+                    <th>المرحلة</th>
+                    <th>الفصل</th>
+                    <th>هاتف ولي الأمر</th>
+                    <th class="text-center" style="min-width: 130px;">النقاط</th>
+                    <th class="text-center" style="min-width: 230px;">التحكم بالنقاط</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-2 d-block mb-2 text-muted"></i>
+                            لا يوجد أطفال مطابقون للبحث الحالي.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var child in Model)
+                    {
+                        <tr id="child-row-@child.Id">
+                            <td data-label="الاسم">
+                                <div class="d-flex align-items-center justify-content-between gap-2">
+                                    <span class="fw-bold">@child.FullName</span>
+                                    <span class="badge bg-primary-subtle text-primary d-md-none">@child.Class?.Name</span>
+                                </div>
+                            </td>
+                            <td data-label="المرحلة" class="d-none d-md-table-cell">
+                                <span class="badge bg-secondary-subtle text-secondary">@(child.Class?.Stage?.Name ?? "-")</span>
+                            </td>
+                            <td data-label="الفصل" class="d-none d-md-table-cell">
+                                <span class="badge bg-primary-subtle text-primary">@(child.Class?.Name ?? "-")</span>
+                            </td>
+                            <td data-label="هاتف ولي الأمر">
+                                @if (!string.IsNullOrWhiteSpace(child.ParentPhoneNumber))
+                                {
+                                    <a href="tel:@child.ParentPhoneNumber" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1" dir="ltr">
+                                        <i class="bi bi-telephone text-success"></i>
+                                        <span>@child.ParentPhoneNumber</span>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td data-label="النقاط" class="text-center">
+                                <span class="points-badge badge bg-warning-subtle text-dark border border-warning-subtle px-3 py-2 rounded-pill fs-6 fw-bold" id="badge-@child.Id">
+                                    <i class="bi bi-star-fill text-warning me-1"></i>
+                                    <span id="points-val-@child.Id">@child.Points</span>
+                                </span>
+                            </td>
+                            <td data-label="التحكم بالنقاط" class="text-center">
+                                <div class="d-inline-flex align-items-center justify-content-center gap-1 flex-wrap">
+                                    <!-- زر إضافة نقطة -->
+                                    <form asp-action="AdjustPoints" method="post" class="d-inline points-form" data-child-id="@child.Id" data-delta="1">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="childId" value="@child.Id" />
+                                        <input type="hidden" name="delta" value="1" />
+                                        <input type="hidden" name="returnSearch" value="@searchVal" />
+                                        <input type="hidden" name="returnClassId" value="@classVal" />
+                                        <input type="hidden" name="returnStageId" value="@stageVal" />
+                                        <button type="submit" class="btn btn-sm btn-outline-success app-btn px-2 py-1 fw-bold btn-plus" title="إضافة نقطة (+1)">
+                                            <i class="bi bi-plus-lg"></i>
+                                            <span>+1</span>
+                                        </button>
+                                    </form>
+
+                                    <!-- زر خصم نقطة -->
+                                    <form asp-action="AdjustPoints" method="post" class="d-inline points-form" data-child-id="@child.Id" data-delta="-1">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="childId" value="@child.Id" />
+                                        <input type="hidden" name="delta" value="-1" />
+                                        <input type="hidden" name="returnSearch" value="@searchVal" />
+                                        <input type="hidden" name="returnClassId" value="@classVal" />
+                                        <input type="hidden" name="returnStageId" value="@stageVal" />
+                                        <button type="submit" class="btn btn-sm btn-outline-warning app-btn px-2 py-1 fw-bold btn-minus" id="btn-minus-@child.Id" title="خصم نقطة (-1)" @(child.Points <= 0 ? "disabled" : "")>
+                                            <i class="bi bi-dash-lg"></i>
+                                            <span>-1</span>
+                                        </button>
+                                    </form>
+
+                                    <!-- زر تصفير نقاط الطفل -->
+                                    <form asp-action="ResetChildPoints" method="post" class="d-inline reset-child-form" data-child-id="@child.Id" data-child-name="@child.FullName">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="childId" value="@child.Id" />
+                                        <input type="hidden" name="returnSearch" value="@searchVal" />
+                                        <input type="hidden" name="returnClassId" value="@classVal" />
+                                        <input type="hidden" name="returnStageId" value="@stageVal" />
+                                        <button type="button" class="btn btn-sm btn-outline-danger app-btn px-2 py-1 btn-reset-single" title="تصفير نقاط الطفل">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                            <span>تصفير</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: تصفير نقاط كل الأطفال -->
+<div class="modal fade" id="resetAllModal" tabindex="-1" aria-labelledby="resetAllModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow border-0" style="border-radius: 16px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-danger fw-bold d-flex align-items-center gap-2" id="resetAllModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill text-danger fs-4"></i>
+                    تأكيد تصفير نقاط الأطفال
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+            </div>
+            <div class="modal-body py-3">
+                <p class="mb-3 text-secondary">
+                    أنت على وشك تصفير نقاط الأطفال وإعادتها إلى <strong class="text-danger">0</strong>. هذه العملية نهائية ولا يمكن التراجع عنها.
+                </p>
+                <div class="alert alert-warning d-flex align-items-center gap-2 mb-0 py-2 small">
+                    <i class="bi bi-info-circle-fill fs-5 text-warning flex-shrink-0"></i>
+                    <span>اختر نطاق التصفير المطلوب:</span>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 d-flex justify-content-between flex-wrap gap-2">
+                <button type="button" class="btn btn-light app-btn" data-bs-dismiss="modal">إلغاء</button>
+                <div class="d-flex gap-2">
+                    @if (hasFilter)
+                    {
+                        <form asp-action="ResetAllPoints" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="search" value="@searchVal" />
+                            <input type="hidden" name="classId" value="@classVal" />
+                            <input type="hidden" name="stageId" value="@stageVal" />
+                            <input type="hidden" name="resetAll" value="false" />
+                            <button type="submit" class="btn btn-outline-danger app-btn">
+                                <i class="bi bi-filter me-1"></i>
+                                تصفير المعروضين فقط (@totalChildren)
+                            </button>
+                        </form>
+                    }
+                    <form asp-action="ResetAllPoints" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="resetAll" value="true" />
+                        <button type="submit" class="btn btn-danger app-btn">
+                            <i class="bi bi-people-fill me-1"></i>
+                            تصفير نقاط كل الأطفال
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .points-badge {
+        transition: transform 0.2s ease, background-color 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: 0 2px 6px rgba(255, 193, 7, 0.2);
+    }
+    .points-badge.bump-up {
+        transform: scale(1.25);
+        background-color: #d1e7dd !important;
+        color: #0f5132 !important;
+    }
+    .points-badge.bump-down {
+        transform: scale(0.9);
+        background-color: #f8d7da !important;
+        color: #842029 !important;
+    }
+    .btn-plus:hover {
+        transform: translateY(-1px);
+    }
+    .btn-minus:hover {
+        transform: translateY(-1px);
+    }
+</style>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+            const token = tokenInput ? tokenInput.value : '';
+
+            // Handle AJAX for + and - points
+            document.querySelectorAll('.points-form').forEach(form => {
+                form.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+
+                    const childId = this.dataset.childId;
+                    const delta = parseInt(this.dataset.delta, 10);
+                    const btn = this.querySelector('button');
+                    btn.disabled = true;
+
+                    const formData = new FormData(this);
+
+                    try {
+                        const response = await fetch('@Url.Action("AdjustPoints", "Points", new { area = "Admin" })', {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'RequestVerificationToken': token
+                            },
+                            body: formData
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                updateChildPoints(childId, data.newPoints, delta);
+                            }
+                        } else {
+                            // Fallback to normal submit on HTTP error
+                            form.submit();
+                        }
+                    } catch (err) {
+                        form.submit();
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            });
+
+            // Handle reset single child points with confirmation
+            document.querySelectorAll('.reset-child-form').forEach(form => {
+                const btn = form.querySelector('.btn-reset-single');
+                btn.addEventListener('click', async function () {
+                    const childName = form.dataset.childName || 'هذا الطفل';
+                    if (!confirm(`هل أنت متأكد من رغبتك في تصفير نقاط ${childName}؟`)) {
+                        return;
+                    }
+
+                    const childId = form.dataset.childId;
+                    btn.disabled = true;
+                    const formData = new FormData(form);
+
+                    try {
+                        const response = await fetch('@Url.Action("ResetChildPoints", "Points", new { area = "Admin" })', {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'RequestVerificationToken': token
+                            },
+                            body: formData
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                updateChildPoints(childId, 0, -1);
+                            }
+                        } else {
+                            form.submit();
+                        }
+                    } catch (err) {
+                        form.submit();
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            });
+
+            function updateChildPoints(childId, newPoints, delta) {
+                const valElem = document.getElementById(`points-val-${childId}`);
+                const badgeElem = document.getElementById(`badge-${childId}`);
+                const minusBtn = document.getElementById(`btn-minus-${childId}`);
+
+                if (valElem) {
+                    const oldPoints = parseInt(valElem.textContent, 10) || 0;
+                    valElem.textContent = newPoints;
+
+                    // Animate badge
+                    if (badgeElem) {
+                        const bumpClass = delta > 0 ? 'bump-up' : 'bump-down';
+                        badgeElem.classList.add(bumpClass);
+                        setTimeout(() => badgeElem.classList.remove(bumpClass), 300);
+                    }
+
+                    // Update minus button state
+                    if (minusBtn) {
+                        minusBtn.disabled = newPoints <= 0;
+                    }
+
+                    // Recalculate summary stats on page
+                    recalculateSummary();
+                }
+            }
+
+            function recalculateSummary() {
+                let total = 0;
+                let max = 0;
+                document.querySelectorAll('[id^="points-val-"]').forEach(el => {
+                    const pts = parseInt(el.textContent, 10) || 0;
+                    total += pts;
+                    if (pts > max) max = pts;
+                });
+
+                const totalElem = document.getElementById('stat-total-points');
+                const maxElem = document.getElementById('stat-max-points');
+                if (totalElem) totalElem.textContent = total;
+                if (maxElem) maxElem.textContent = max;
+            }
+        });
+    </script>
+}

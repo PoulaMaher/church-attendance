@@ -52,53 +52,59 @@ namespace churchAttendace.Data
                 await context.SaveChangesAsync();
             }
 
-            var kidsStage = await context.Stages.FirstAsync(s => s.Name == "أطفال");
-            var youthStage = await context.Stages.FirstAsync(s => s.Name == "شباب");
+            var kidsStage = await context.Stages.FirstOrDefaultAsync(s => s.Name == "أطفال") ?? await context.Stages.FirstOrDefaultAsync();
+            var youthStage = await context.Stages.FirstOrDefaultAsync(s => s.Name == "شباب") ?? await context.Stages.OrderByDescending(s => s.Id).FirstOrDefaultAsync();
 
-            var managerEmail1 = "manager1@system.com";
-            if (await userManager.FindByEmailAsync(managerEmail1) == null)
+            if (kidsStage != null)
             {
-                var manager1 = new ApplicationUser
+                var managerEmail1 = "manager1@system.com";
+                if (await userManager.FindByEmailAsync(managerEmail1) == null)
                 {
-                    UserName = managerEmail1,
-                    Email = managerEmail1,
-                    EmailConfirmed = true,
-                    IsActive = true
-                };
-                await userManager.CreateAsync(manager1, "Manager@123");
-                await userManager.AddToRoleAsync(manager1, "StageManager");
+                    var manager1 = new ApplicationUser
+                    {
+                        UserName = managerEmail1,
+                        Email = managerEmail1,
+                        EmailConfirmed = true,
+                        IsActive = true
+                    };
+                    await userManager.CreateAsync(manager1, "Manager@123");
+                    await userManager.AddToRoleAsync(manager1, "StageManager");
 
-                context.StageManagerStages.Add(new StageManagerStage
-                {
-                    UserId = manager1.Id,
-                    StageId = kidsStage.Id,
-                    IsActive = true
-                });
+                    context.StageManagerStages.Add(new StageManagerStage
+                    {
+                        UserId = manager1.Id,
+                        StageId = kidsStage.Id,
+                        IsActive = true
+                    });
+                }
             }
 
-            var managerEmail2 = "manager2@system.com";
-            if (await userManager.FindByEmailAsync(managerEmail2) == null)
+            if (youthStage != null)
             {
-                var manager2 = new ApplicationUser
+                var managerEmail2 = "manager2@system.com";
+                if (await userManager.FindByEmailAsync(managerEmail2) == null)
                 {
-                    UserName = managerEmail2,
-                    Email = managerEmail2,
-                    EmailConfirmed = true,
-                    IsActive = true
-                };
-                await userManager.CreateAsync(manager2, "Manager@123");
-                await userManager.AddToRoleAsync(manager2, "StageManager");
+                    var manager2 = new ApplicationUser
+                    {
+                        UserName = managerEmail2,
+                        Email = managerEmail2,
+                        EmailConfirmed = true,
+                        IsActive = true
+                    };
+                    await userManager.CreateAsync(manager2, "Manager@123");
+                    await userManager.AddToRoleAsync(manager2, "StageManager");
 
-                context.StageManagerStages.Add(new StageManagerStage
-                {
-                    UserId = manager2.Id,
-                    StageId = youthStage.Id,
-                    IsActive = true
-                });
+                    context.StageManagerStages.Add(new StageManagerStage
+                    {
+                        UserId = manager2.Id,
+                        StageId = youthStage.Id,
+                        IsActive = true
+                    });
+                }
             }
             await context.SaveChangesAsync();
 
-            if (!context.Classes.Any())
+            if (!context.Classes.Any() && kidsStage != null && youthStage != null)
             {
                 var classes = new[]
                 {

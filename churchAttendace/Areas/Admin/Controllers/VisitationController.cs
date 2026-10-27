@@ -55,7 +55,7 @@ namespace churchAttendace.Areas.Admin.Controllers
             foreach (var group in attendanceData.GroupBy(a => a.ChildId))
             {
                 var ordered = group.OrderBy(r => r.SessionDate).ToList();
-                if (ordered.Count < 2)
+                if (ordered.Count < 3)
                 {
                     continue;
                 }
@@ -69,7 +69,7 @@ namespace churchAttendace.Areas.Admin.Controllers
                     if (!record.IsPresent)
                     {
                         consecAbsents++;
-                        if (consecAbsents >= 2)
+                        if (consecAbsents >= 3)
                         {
                             lastAbsentInPair = record.SessionDate;
                             lastAbsentContacted = record.Notes != null && record.Notes.Contains("[FOLLOWUP_CONTACTED]");

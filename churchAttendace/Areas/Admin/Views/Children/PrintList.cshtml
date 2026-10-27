@@ -1,0 +1,191 @@
+@model IEnumerable<churchAttendace.Models.Entities.Child>
+@{
+    Layout = null;
+    var stageName = ViewData["StageName"]?.ToString();
+    var className = ViewData["ClassName"]?.ToString();
+    var searchVal = ViewData["SearchTerm"]?.ToString();
+    var itemsList = Model.ToList();
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>كشف بيانات الأطفال - كنيسة الشهيد العظيم مارمينا</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
+    <style>
+        body {
+            font-family: "Cairo", "Segoe UI", Tahoma, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            padding: 20px;
+        }
+        .print-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .header-section {
+            border-bottom: 2px solid #0d6efd;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th {
+            background-color: #1e3a8a !important;
+            color: #fff !important;
+            text-align: center;
+            vertical-align: middle;
+            padding: 8px 6px;
+            border: 1px solid #cbd5e1;
+        }
+        td {
+            padding: 6px;
+            text-align: center;
+            vertical-align: middle;
+            border: 1px solid #e2e8f0;
+        }
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        @@media print {
+            body {
+                background-color: #fff;
+                padding: 0;
+            }
+            .print-container {
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+            th {
+                background-color: #1e3a8a !important;
+                color: #fff !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            tr:nth-child(even) {
+                background-color: #f8fafc !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            @@page {
+                size: A4 landscape;
+                margin: 10mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-container">
+        <!-- أزرار الإجراءات (لا تظهر في الطباعة) -->
+        <div class="no-print d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
+            <div>
+                <a href="@Url.Action("Index", "Children", new { area = "Admin" })" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-right"></i> رجوع لبيانات الأطفال
+                </a>
+            </div>
+            <div class="d-flex gap-2">
+                <button onclick="window.print()" class="btn btn-primary btn-sm d-flex align-items-center gap-1">
+                    <i class="bi bi-printer"></i> طباعة / حفظ كـ PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- ترويسة التقرير -->
+        <div class="header-section text-center">
+            <h3 class="fw-bold mb-1" style="color: #1e3a8a;">كنيسة الشهيد العظيم مارمينا</h3>
+            <h5 class="text-secondary mb-2">كشف بيانات الأطفال</h5>
+            <div class="d-flex justify-content-center gap-4 text-muted small flex-wrap">
+                <span><i class="bi bi-calendar3"></i> تاريخ الاستخراج: @DateTime.Now.ToString("yyyy/MM/dd HH:mm")</span>
+                <span><i class="bi bi-people"></i> إجمالي الأطفال: @itemsList.Count</span>
+                @if (!string.IsNullOrEmpty(stageName))
+                {
+                    <span><strong>المرحلة:</strong> @stageName</span>
+                }
+                @if (!string.IsNullOrEmpty(className))
+                {
+                    <span><strong>الفصل:</strong> @className</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(searchVal))
+                {
+                    <span><strong>بحث:</strong> @searchVal</span>
+                }
+            </div>
+        </div>
+
+        <!-- جدول الأطفال -->
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 35px;">م</th>
+                        <th>اسم الطفل</th>
+                        <th>المرحلة</th>
+                        <th>الفصل</th>
+                        <th>ولي الأمر</th>
+                        <th>هاتف ولي الأمر</th>
+                        <th>هاتف الطفل</th>
+                        <th>العنوان</th>
+                        <th>تاريخ الميلاد</th>
+                        <th style="width: 45px;">النقاط</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!itemsList.Any())
+                    {
+                        <tr>
+                            <td colspan="10" class="text-center py-4 text-muted">لا توجد بيانات مطابقة.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        for (int i = 0; i < itemsList.Count; i++)
+                        {
+                            var child = itemsList[i];
+                            <tr>
+                                <td>@(i + 1)</td>
+                                <td class="text-start fw-bold pe-2">@child.FullName</td>
+                                <td>@(child.Class?.Stage?.Name ?? "-")</td>
+                                <td>@(child.Class?.Name ?? "-")</td>
+                                <td>@(string.IsNullOrWhiteSpace(child.ParentName) ? "-" : child.ParentName)</td>
+                                <td dir="ltr">@(string.IsNullOrWhiteSpace(child.ParentPhoneNumber) ? "-" : child.ParentPhoneNumber)</td>
+                                <td dir="ltr">@(string.IsNullOrWhiteSpace(child.PhoneNumber) ? "-" : child.PhoneNumber)</td>
+                                <td>@(string.IsNullOrWhiteSpace(child.Address) ? "-" : child.Address)</td>
+                                <td>@(child.BirthDate != default ? child.BirthDate.ToString("yyyy/MM/dd") : "-")</td>
+                                <td><strong>@child.Points</strong></td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- تذييل الصفحة -->
+        <div class="mt-4 pt-2 border-top d-flex justify-content-between align-items-center text-muted small">
+            <span>نظام إدارة خدمة الحضور والافتقاد - كنيسة مارمينا</span>
+            <span>صفحة طباعة معتمدة</span>
+        </div>
+    </div>
+
+    <script>
+        // تشغيل نافذة الطباعة تلقائياً عند فتح الصفحة
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                window.print();
+            }, 400);
+        });
+    </script>
+</body>
+</html>

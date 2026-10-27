@@ -50,7 +50,7 @@ namespace churchAttendace.Areas.Admin.Controllers
                 .ToListAsync();
 
             var result = new List<GiftsChildRowViewModel>();
-            const int requiredConsecutiveWeeks = 4;
+            const int requiredConsecutiveWeeks = 3;
 
             foreach (var group in attendanceData.GroupBy(a => a.ChildId))
             {
