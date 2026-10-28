@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = "هدايا الأربع أسابيع";
     ViewData["PageTitle"] = "هدايا الأربع أسابيع";
-    ViewData["PageSubtitle"] = "الأطفال الذين حضروا 4 أسابيع متتالية أو أكثر";
+    ViewData["PageSubtitle"] = "الأطفال الذين أكملوا 4 مرات حضور أو أكثر منذ آخر هدية (الغياب لا يُصفّر العدد)";
     ViewData["Breadcrumbs"] = new List<BreadcrumbItem>
     {
         new() { Title = "لوحة التحكم", Url = Url.Action("Index", "Dashboard", new { area = "Admin" }) },
@@ -38,8 +38,8 @@
                     <th>المرحلة</th>
                     <th>الفصل</th>
                     <th>اسم الطفل</th>
-                    <th>عدد الأسابيع المتتالية</th>
-                    <th>آخر جلسة في السلسلة</th>
+                    <th>عدد مرات الحضور</th>
+                    <th>آخر حضور</th>
                     <th class="text-end">تسليم الهدية</th>
                 </tr>
             </thead>
@@ -48,7 +48,7 @@
                 {
                     <tr>
                         <td colspan="6" class="text-center text-muted py-4">
-                            لا يوجد حالياً أطفال حضروا 4 أسابيع متتالية.
+                            لا يوجد حالياً أطفال أكملوا 4 مرات حضور.
                         </td>
                     </tr>
                 }
@@ -60,12 +60,12 @@
                             <td>@item.StageName</td>
                             <td>@item.ClassName</td>
                             <td>@item.ChildName</td>
-                            <td>@item.ConsecutiveWeeks</td>
+                            <td>@item.AttendedSessions</td>
                             <td>@item.LastSessionDate?.ToString("yyyy/MM/dd")</td>
                             <td class="text-end">
                                 <form asp-action="MarkGiftDelivered" method="post" asp-route-childId="@item.ChildId">
                                     @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-success btn-sm app-btn" title="بعد الضغط يُزال من القائمة ويُعاد العد من جديد (4 أسابيع متتالية بعد آخر تسليم)">
+                                    <button type="submit" class="btn btn-success btn-sm app-btn" title="بعد الضغط يُزال من القائمة ويُعاد العد من الصفر (4 مرات حضور بعد آخر تسليم)">
                                         <i class="bi bi-gift"></i>
                                         تم تسليم الهدية
                                     </button>

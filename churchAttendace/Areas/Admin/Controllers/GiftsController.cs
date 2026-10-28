@@ -21,89 +21,68 @@ namespace churchAttendace.Areas.Admin.Controllers
             _scope = scope;
         }
 
+        /// <summary>
+        /// Number of attended sessions (since the last delivered gift) required to earn a gift.
+        /// Absences do NOT reset the count; they only pause it.
+        /// Example: P, P, P, A, A, P  =>  4 attended sessions  =>  child appears.
+        /// </summary>
+        private const int RequiredAttendedSessions = 4;
+
         public async Task<IActionResult> Index()
         {
             var allowedStageIds = await _scope.GetAllowedStageIdsAsync();
             var allowedClassIds = await _scope.GetAllowedClassIdsAsync();
 
-            var attendanceQuery = _context.Attendance
-                .Include(a => a.Child)
-                .ThenInclude(c => c!.Class)
-                .ThenInclude(c => c!.Stage)
-                .Include(a => a.Session)
+            // Count present sessions per child after the last gift delivery (computed in the database).
+            var eligible = await _context.Attendance
                 .ApplyAttendanceScope(_scope, allowedStageIds, allowedClassIds)
-                .Where(a => a.Child!.IsActive)
-                .AsQueryable();
-
-            var attendanceData = await attendanceQuery
-                .OrderBy(a => a.ChildId)
-                .ThenBy(a => a.Session!.SessionDate)
-                .Select(a => new
+                .Where(a => a.IsPresent
+                            && a.Child!.IsActive
+                            && (a.Child.LastGiftDeliveredAt == null
+                                || a.Session!.SessionDate > a.Child.LastGiftDeliveredAt))
+                .Select(a => new { a.ChildId, a.Session!.SessionDate })
+                .GroupBy(a => a.ChildId)
+                .Select(g => new
                 {
-                    a.ChildId,
-                    a.IsPresent,
-                    SessionDate = a.Session!.SessionDate,
-                    Child = a.Child!,
-                    ClassName = a.Child!.Class!.Name,
-                    StageName = a.Child!.Class!.Stage!.Name
+                    ChildId = g.Key,
+                    AttendedCount = g.Count(),
+                    LastAttendedDate = g.Max(x => x.SessionDate)
                 })
+                .Where(x => x.AttendedCount >= RequiredAttendedSessions)
                 .ToListAsync();
 
-            var result = new List<GiftsChildRowViewModel>();
-            const int requiredConsecutiveWeeks = 3;
+            var eligibleIds = eligible.Select(e => e.ChildId).ToList();
 
-            foreach (var group in attendanceData.GroupBy(a => a.ChildId))
-            {
-                var firstRecord = group.First();
-                var child = firstRecord.Child;
-                var cutoffDate = child.LastGiftDeliveredAt ?? DateTime.MinValue;
-                var ordered = group.Where(r => r.SessionDate > cutoffDate).OrderBy(r => r.SessionDate).ToList();
-                if (ordered.Count < requiredConsecutiveWeeks)
-                    continue;
-
-                var consecPresences = 0;
-                var maxConsec = 0;
-                DateTime? lastSessionInStreak = null;
-
-                foreach (var record in ordered)
+            var childInfo = await _context.Children
+                .Where(c => eligibleIds.Contains(c.Id))
+                .Select(c => new
                 {
-                    if (record.IsPresent)
-                    {
-                        consecPresences++;
-                        if (consecPresences > maxConsec)
-                        {
-                            maxConsec = consecPresences;
-                            lastSessionInStreak = record.SessionDate;
-                        }
-                    }
-                    else
-                    {
-                        consecPresences = 0;
-                    }
-                }
+                    c.Id,
+                    c.FullName,
+                    ClassName = c.Class!.Name,
+                    StageName = c.Class!.Stage!.Name
+                })
+                .ToDictionaryAsync(c => c.Id);
 
-                if (maxConsec >= requiredConsecutiveWeeks)
+            var result = eligible
+                .Where(e => childInfo.ContainsKey(e.ChildId))
+                .Select(e => new GiftsChildRowViewModel
                 {
-                    var lastRecord = ordered.Last();
-                    result.Add(new GiftsChildRowViewModel
-                    {
-                        ChildId = child.Id,
-                        StageName = lastRecord.StageName,
-                        ClassName = lastRecord.ClassName,
-                        ChildName = child.FullName,
-                        ConsecutiveWeeks = maxConsec,
-                        LastSessionDate = lastSessionInStreak
-                    });
-                }
-            }
+                    ChildId = e.ChildId,
+                    StageName = childInfo[e.ChildId].StageName,
+                    ClassName = childInfo[e.ChildId].ClassName,
+                    ChildName = childInfo[e.ChildId].FullName,
+                    AttendedSessions = e.AttendedCount,
+                    LastSessionDate = e.LastAttendedDate
+                })
+                .OrderBy(r => r.StageName)
+                .ThenBy(r => r.ClassName)
+                .ThenBy(r => r.ChildName)
+                .ToList();
 
             var model = new GiftsViewModel
             {
                 Children = result
-                    .OrderBy(r => r.StageName)
-                    .ThenBy(r => r.ClassName)
-                    .ThenBy(r => r.ChildName)
-                    .ToList()
             };
 
             return View(model);
@@ -122,7 +101,7 @@ namespace churchAttendace.Areas.Admin.Controllers
 
             child.LastGiftDeliveredAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "تم تسجيل تسليم الهدية. سيُعاد إظهار الطفل عند حضوره 4 أسابيع متتالية من جديد.";
+            TempData["SuccessMessage"] = "تم تسجيل تسليم الهدية. سيُعاد إظهار الطفل عند إكماله 4 مرات حضور جديدة.";
             return RedirectToAction(nameof(Index));
         }
 
